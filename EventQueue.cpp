@@ -1,13 +1,19 @@
 #include "EventQueue.h"
 #include <cstdlib>
+#include "Event.c"
 
 const int QUIT_TIME = 10000;
-Event NullEvent = (Event) {-1; JOB_NULL; QUIT_TIME*2};
+//Event NullEvent = (Event) {-1; JOB_NULL; QUIT_TIME*2}; replaced with get null event method in method.c
 EventQueue::EventQueue()
 {
     // Constructor - Set queue empty
     num_items = 0, length = 2;
     data = (Event**) malloc(2*sizeof(Event*));
+    NullEventPtr = (Event*) malloc(sizeof(Event*));
+// TODO (Shmuel Jacobs#1#): Create Destructor to clean up allocated space
+    NullEventPtr->serial = -1;
+    NullEventPtr->jobtype = JOB_NULL;
+    NullEventPtr->timestamp = QUIT_TIME*2;
 }
 
 bool EventQueue::reSpace()
@@ -27,8 +33,7 @@ bool EventQueue::reSpace()
     }
     // Beyond new data, fill empty space with null events to allow sorting.
     for(;i < length; i++){
-        // TODO (Shmuel Jacobs#1#): Can I pass the address of a constant?
-        temp[i] = &NullEvent;
+        temp[i] = NullEventPtr;
     }
     // Free old array
     free(data);
@@ -50,8 +55,10 @@ bool EventQueue::setEntry(Event* entry, int place)
     }
     // Reset selected entry.
     data[place] = entry;
+    // Reheap
+    heapUp();
 
-    return data[place] == entry;
+    return true;
 }
 
 bool EventQueue::append(Event* entry)
@@ -60,6 +67,17 @@ bool EventQueue::append(Event* entry)
     return setEntry(entry, num_items++);
 }
 
+Event* EventQueue::getNext()
+{
+    // Get pointer to next event.
+    Event* head = data[0];
+    // Remove next event from queue.
+    setEntry(NullEventPtr,0);
+    // Reheap.
+    heapUp();
+
+    return head;
+}
 void EventQueue::heapUp(){
     int i = 0;
     for(i = num_items; i > 0; i/=2){
@@ -114,3 +132,14 @@ void inline arraySwap(Event** data, int first, int second)
 	*(data + second) = *(data + first);
 	*(data + first) = temp;
 }
+
+/*
+ * Free all allocated space and tear down instance.
+ */
+ EventQueue::~EventQueue(){
+    // Free space given to null event.
+    free(NullEventPtr);
+    // Free space used by all events in the queue.
+    // Free all spots in the queue.
+    delete[] data;
+ }

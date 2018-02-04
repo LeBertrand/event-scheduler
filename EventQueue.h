@@ -26,7 +26,14 @@ class EventQueue
          */
         bool append(Event* entry);
 
+        /*
+         *  Pop head event from event queue.
+         *  Replace event with null and return event.
+         */
         Event* getNext();
+
+        // Free up queue and null object, and tear down instance.
+        ~EventQueue();
 
     protected:
 
@@ -36,6 +43,8 @@ class EventQueue
         int num_items, length;
         // Pointer to allocated space storing array
         Event** data;
+        // Null Pointer used to backfill empty values in allocated array.
+        Event* NullEventPtr;
 
         /* Allocate twice as much space for array. */
         bool reSpace();
