@@ -55,8 +55,6 @@ bool EventQueue::setEntry(Event* entry, int place)
     }
     // Reset selected entry.
     data[place] = entry;
-    // Reheap
-    heapUp();
 
     return true;
 }
@@ -64,7 +62,11 @@ bool EventQueue::setEntry(Event* entry, int place)
 bool EventQueue::append(Event* entry)
 {
     // Put entry after filled places in list, and record one more place filled.
-    return setEntry(entry, num_items++);
+    bool worked = setEntry(entry, num_items++);
+    // Reheap
+    heapUp();
+    
+    return worked;
 }
 
 Event* EventQueue::getNext()
@@ -79,8 +81,8 @@ Event* EventQueue::getNext()
     return head;
 }
 void EventQueue::heapUp(){
-    int i = 0;
-    for(i = num_items; i > 0; i/=2){
+    int i;
+    for(i = num_items - 1; i > 0; i/=2){
         if(data[i]->timestamp < data[i/2]->timestamp){
             arraySwap(data, i, i/2);
         }
