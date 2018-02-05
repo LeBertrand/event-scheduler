@@ -31,11 +31,29 @@ int main()
     printf("Retrieved event serial - %d, job code - %d, timestamp - %d\n\n",
         retrieved->serial,retrieved->jobtype,retrieved->timestamp); */
     
-    /* Add 2, 1, 3 to queue then retrieve all. */
+    /* Add 2, 1, 3 to queue then retrieve all.
     qu->append(testEvents[1]);
     qu->append(testEvents[0]);
     qu->append(testEvents[2]);
     
+    retrieved = qu->getNext();
+    printf("Retrieved event serial - %d, job code - %d, timestamp - %d\n\n",
+        retrieved->serial,retrieved->jobtype,retrieved->timestamp);
+    retrieved = qu->getNext();
+    printf("Retrieved event serial - %d, job code - %d, timestamp - %d\n\n",
+        retrieved->serial,retrieved->jobtype,retrieved->timestamp);
+    retrieved = qu->getNext();
+    printf("Retrieved event serial - %d, job code - %d, timestamp - %d\n\n",
+        retrieved->serial,retrieved->jobtype,retrieved->timestamp); */
+        
+    qu->append(testEvents[1]);
+    qu->append(testEvents[2]);
+    retrieved = qu->getNext();
+    printf("Retrieved event serial - %d, job code - %d, timestamp - %d\n\n",
+        retrieved->serial,retrieved->jobtype,retrieved->timestamp);
+    
+    qu->append(testEvents[0]);
+    qu->append(testEvents[1]);
     retrieved = qu->getNext();
     printf("Retrieved event serial - %d, job code - %d, timestamp - %d\n\n",
         retrieved->serial,retrieved->jobtype,retrieved->timestamp);
