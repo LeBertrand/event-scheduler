@@ -1,13 +1,14 @@
 #include "Component.h"
+#include "LinkedListQueue.cpp"
 
 Component::Component()
 {
-    //ctor
+    qu = new LinkedListQueue();
 }
 
 Component::~Component()
 {
-    //dtor
+    delete qu;
 }
 
 Component& Component::operator=(const Component& rhs)
@@ -15,4 +16,10 @@ Component& Component::operator=(const Component& rhs)
     if (this == &rhs) return *this; // handle self assignment
     //assignment operator
     return *this;
+}
+
+void Component::pushJob(int serial)
+{
+    qu->append(serial);
+    idle = false;
 }

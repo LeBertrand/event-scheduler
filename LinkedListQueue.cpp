@@ -64,3 +64,8 @@ int LinkedListQueue::pop()
     free(take);
     return val;
 }
+
+inline int LinkedListQueue::peek()
+{
+    return head->data;
+}

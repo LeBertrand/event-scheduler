@@ -15,13 +15,15 @@ class LinkedListQueue
     public:
         LinkedListQueue();
         LinkedListQueue(char*);
-        virtual ~LinkedListQueue();
+        ~LinkedListQueue();
         //LinkedList(const LinkedList& other);
 
         void push(int);
         int pop(void);
+        inline int peek(void);
 
-        unsigned int Getlength() { return length; }
+        // Return the number of entries in queue.
+        inline unsigned int Getlength() { return length; }
 
     protected:
 

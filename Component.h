@@ -31,16 +31,19 @@ class Component
          * \param val New value to set
          */
         void Setjobs_waiting(int val) { jobs_waiting = val; }
+        
+        void pushJob(int serial);
+        
+        void advanceTime(int ticks);
 
     protected:
 
     private:
         // Integer Queue storing serial numbers of waiting jobs
-        LinkedListQueue qu;
+        LinkedListQueue* qu;
         // Flag indicating whether component is in use.
         bool idle;
-        // Number of jobs in queue.
-        int jobs_waiting;
+        // Number of jobs in queue is supplied by memeber method get_length.
 };
 
 #endif // COMPONENT_H
