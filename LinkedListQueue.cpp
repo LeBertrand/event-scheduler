@@ -35,7 +35,13 @@ LinkedListQueue::~LinkedListQueue()
     while(head != NULL){
         last = head->next;
         free(head);
+        head = last;
     }
+    head = NULL;
+    free(last);
+    last = NULL;
+    free(name);
+    
 }
 
 void LinkedListQueue::push(int x){

@@ -1,3 +1,16 @@
+#include "LinkedListQueue.h"
+
+/*
+ *  Programmer  -   Shmuel Jacobs
+ *  Date - February 6
+ *  Operating Systems and Sytems Programming
+ 
+ 
+ *  Component class models a computer component in a system managed by a
+ *  scheduler. Class relies on scheduler, to avoid redundant bookkeeping.
+ *  Class can't do its own bookkeeping.
+ */
+
 #ifndef COMPONENT_H
 #define COMPONENT_H
 
@@ -15,35 +28,52 @@ class Component
          */
         Component& operator=(const Component& other);
 
-        /** Access idle
+        /**
          * \return The current value of idle
          */
         bool Getidle() { return idle; }
-        /** Set idle
-         * \param val New value to set
+
+        /**
+         * \return The number of jobs currently in queue.
          */
-        void Setidle(bool val) { idle = val; }
-        /** Access jobs_waiting
-         * \return The current value of jobs_waiting
+        int Getjobs_waiting() { return qu.Getlength(); }
+
+        /*
+         *  Add job to wait queue. Only use if not idle. If idle, don't handle
+            job at all. Scheduler should immediately put its completion in the
+            heap and increase the wait time.
          */
-        int Getjobs_waiting() { return jobs_waiting; }
-        /** Set jobs_waiting
-         * \param val New value to set
-         */
-        void Setjobs_waiting(int val) { jobs_waiting = val; }
-        
         void pushJob(int serial);
         
+        /*
+         *  Move head job out of queue and begin working.
+         */
+        int nextJob();
+        
+        /*
+         *  Allow scheduler to schedule new job. Scheduler generates random
+         *  number of ticks for job length, and sends it back to this method.
+         */
+        void setTime(int ticks);
+        /*
+         *  Acknowledge time. Decrease wait_time by number of ticks input.
+         */
         void advanceTime(int ticks);
-
+        
     protected:
+        // Mark component idle. For call by scheduler.
+        inline void Setidle(bool);
 
     private:
         // Integer Queue storing serial numbers of waiting jobs
-        LinkedListQueue* qu;
+        LinkedListQueue qu;
         // Flag indicating whether component is in use.
         bool idle;
-        // Number of jobs in queue is supplied by memeber method get_length.
+        
+        // Number of jobs in queue is supplied by queue's method get_length.
+        
+        // Number of ticks until finishing current job
+        unsigned int current_wait;
 };
 
 #endif // COMPONENT_H
