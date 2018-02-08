@@ -12,7 +12,7 @@ Component::Component()
 Component::~Component()
 {
     // Free up queue space.
-    delete qu;
+    delete &qu;
 }
 
 Component& Component::operator=(const Component& rhs)
