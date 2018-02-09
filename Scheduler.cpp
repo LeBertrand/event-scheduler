@@ -82,6 +82,7 @@ int main()
     
     // Handle job.
     switch(next->jobtype){
+        // TODO: Standardized logging step in all cases.
         case JOB_ARRIVE_CPU:
             // TODO: All logic relies on current_wait being 0 when the queue is
             //  empty. Can I totally factor out the idle flag?
@@ -105,9 +106,17 @@ int main()
 		    eq->pushJob(next);
     
             break;
+            
         case JOB_FINISH_CPU:
-            // TODO: For stats log, we're counting the job as done, because we're interested in throughput. It not, I can change this part.
+            // TODO: For stats log, we're counting the job as done, because we're interested in throughput. If not, I can change this part.
             // Log completion
+            
+            // Record if CPU just went idle.
+            if(cpu->Getjobs_waiting()==0){
+                cpu->Setidle(true);
+            }
+            // Pop CPU queue to preserve length.
+            cpu->nextJob();
             
             // Decide where the job goes
             if(!decide_quit()){
@@ -123,12 +132,81 @@ int main()
                     // Calculate job length - see similar comment above
                     job_length = ranged_rand(D2_MIN, D2_MAX);
                 }
+                // Job arrival at disk ready to go. Time stays the same.
                 eq->insert(next);
             }
             else {
                 // Log completion or something?
                 // TODO: Figure out if anything needs to happen here.
             }
+            
+            break;
+            
+        case JOB_ARRIVE_D1:
+            // TODO: See above thoughts on refactoring in first case.
+            if(disk_one->Getidle()){
+                // Disk idle so job doesn't wait. Set idle false.
+                disk_one->Setidle(false);
+            } else {
+                // Put job into component queue.
+                disk_one->pushJob(next->serial);
+            }
+            
+		    // Calculate job length - calculate now only for calculating true
+		    // end time - EventQueue doesn't know the wait time, only queue lengths.
+		    job_length = ranged_rand(D1_MIN, D1_MAX);
+		    next->timestamp = global_time + job_length + disk_one->getTime();
+		
+		    // Make event a disk completion.
+		    next->jobtype = JOB_FINISH_D1;
+
+		    // Put completion into event heap.
+		    eq->pushJob(next);
+    
+            break;
+        
+        case JOB_ARRIVE_D2:
+            // TODO: See above thoughts on refactoring in first case.
+            if(disk_two->Getidle()){
+                // Disk idle so job doesn't wait. Set idle false.
+                disk_two->Setidle(false);
+            } else {
+                // Put job into component queue.
+                disk_two->pushJob(next->serial);
+            }
+            
+		    // Calculate job length - calculate now only for calculating true
+		    // end time - EventQueue doesn't know the wait time, only queue lengths.
+		    job_length = ranged_rand(D2_MIN, D2_MAX);
+		    next->timestamp = global_time + job_length + disk_two->getTime();
+		
+		    // Make event a disk completion.
+		    next->jobtype = JOB_FINISH_D2;
+
+		    // Put completion into event heap.
+		    eq->pushJob(next);
+    
+            break;
+        
+        case JOB_FINISH_D1:
+            // Record if Disk just went idle.
+            if(disk_one->Getjobs_waiting()==0){
+                disk_one->Setidle(true);
+            }
+            // Pop disk queue to preserve length.
+            disk_one->nextJob();
+            
+            break;
+            
+        case JOB_FINISH_D2:
+            // Record if Disk just went idle.
+            if(disk_two->Getjobs_waiting()==0){
+                disk_two->Setidle(true);
+            }
+            // Pop disk queue to preserve length.
+            disk_two->nextJob();
+            
+            break;
             
      }
      
