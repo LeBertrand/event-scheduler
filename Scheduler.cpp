@@ -6,6 +6,8 @@
 #include <time.h>
 
 void place_event_new(Component*);
+void loop();
+int find_next_up();
 
 int global_time;
 int serial_stamp;
@@ -29,8 +31,24 @@ int main()
     // Create stamp to give events their serial numbers. Start is arbitrary.
     serial_stamp = 1000;
     
+    loop();
+    
+    
+    return 0;
 }
 
+/*
+ *  Main loop. Four major steps in each pass:
+ *      Generate new CPU arrival.
+ *      Find next job and advance time keeping.
+ *      Handle event.
+ *      Check if simulation over.
+ */
+ void loop()
+ {
+     return;
+ }
+ 
 /*
  *  Function creates new event and places in event queue.
  *  Takes pointer to cpu to allow insertion into queue.
@@ -45,5 +63,13 @@ void place_new_event(Component* cpu)
         (rand() % (ARRIVAL_MAX - ARRIVAL_MIN) + ARRIVAL_MIN);
     // Record job as a CPU arrival.
     ev->jobtype = JOB_ARRIVE_CPU;
+    
+}
+
+/*
+ *  Find next q
+ */
+int find_next_up()
+{
     
 }
