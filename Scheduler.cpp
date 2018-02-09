@@ -35,7 +35,7 @@ int main()
  *  Function creates new event and places in event queue.
  *  Takes pointer to cpu to allow insertion into queue.
  */
-void place_new_event(Component* cpu))
+void place_new_event(Component* cpu)
 {
     Event* ev = (Event*) malloc(sizeof(Event));
     // Give event next serial number available.
