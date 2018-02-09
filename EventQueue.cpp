@@ -60,7 +60,7 @@ bool EventQueue::setEntry(Event* entry, int place)
     return true;
 }
 
-bool EventQueue::append(Event* entry)
+bool EventQueue::insert(Event* entry)
 {
     // Put entry after filled places in list, and record one more place filled.
     bool worked = setEntry(entry, num_items++);

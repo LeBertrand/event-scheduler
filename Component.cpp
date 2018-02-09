@@ -51,9 +51,9 @@ inline void Component::Setidle(bool state)
     idle = state;
 }
 
-void Component::setTime(int ticks)
+void Component::increaseTime(int ticks)
 {
-    current_wait = ticks;
+    current_wait += ticks;
 }
 
 void Component::advanceTime(int ticks)

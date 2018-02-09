@@ -54,15 +54,18 @@ class Component
          *  Allow scheduler to schedule new job. Scheduler generates random
          *  number of ticks for job length, and sends it back to this method.
          */
-        void setTime(int ticks);
+        void increaseTime(int ticks);
         /*
          *  Acknowledge time. Decrease wait_time by number of ticks input.
          */
         void advanceTime(int ticks);
         
-    protected:
         // Mark component idle. For call by scheduler.
         inline void Setidle(bool);
+        
+        inline int getTime() { return current_wait; }
+        
+    protected:
 
     private:
         // Integer Queue storing serial numbers of waiting jobs
@@ -72,7 +75,7 @@ class Component
         
         // Number of jobs in queue is supplied by queue's method get_length.
         
-        // Number of ticks until finishing current job
+        // Number of ticks until finishing current job and queued jobs.
         unsigned int current_wait;
 };
 

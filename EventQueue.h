@@ -22,13 +22,17 @@ class EventQueue
 
         /*
          * Insert item at end of array.
-         * Contains book-keeping, so can be used externally.
+         * Contains book-keeping, so can be used externally by scheduler.
          */
-        bool append(Event* entry);
+        bool insert(Event* entry);
 
         /*
          *  Pop head event from event queue.
          *  Replace event with null and return event.
+         *  Popping next from an empty queue returns the null pointer. Since the
+            timestamp of a nul pointer is INT_MAX, it's functionally the same as
+            advancing the global clock to quit time. The event isn't actually
+            completed.
          */
         Event* getNext();
 

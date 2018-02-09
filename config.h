@@ -7,6 +7,9 @@
 #ifndef CONFIGS
 #define CONFIGS
 
-const int ARRIVAL_MIN = 10, ARRIVAL_MAX = 200, QUIT_TIME = 10000;
+const int ARRIVAL_MIN = 10, ARRIVAL_MAX = 200, QUIT_TIME = 10000, CPU_MIN = 5,
+    CPU_MAX = 100, D1_MIN = 15, D1_MAX = 80, D2_MIN = 15, D2_MAX = 80;
+    
+const float QUIT_PROB = .4;
 
 #endif
