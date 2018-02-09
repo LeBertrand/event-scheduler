@@ -68,6 +68,7 @@ class Component
     protected:
 
     private:
+        // TODO: Isn't queue now totally unnecessary? The serial is retrieved from the event queue. When I pop, I don't event keep anything.
         // Integer Queue storing serial numbers of waiting jobs
         LinkedListQueue qu;
         // Flag indicating whether component is in use.

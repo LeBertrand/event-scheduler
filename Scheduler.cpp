@@ -208,10 +208,10 @@ int main()
             
             break;
             
-     }
+    }
      
-     return;
- }
+    return;
+}
  
 /*
  *  Function creates new event and places in event queue.
