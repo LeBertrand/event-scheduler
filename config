@@ -1,0 +1,26 @@
+// Insignificant comments are ignored.
+
+// For safety, use known non-codes at line[0:2]...'/'
+// Garbage
+QUIT_PROB 0.4
+
+// ARRIVAL_MAX
+AMX 10000
+// ARRIVAL_MIN
+AMN 0
+// CPU_MAX
+CMX 30
+// CPU_MIN
+CMN 8
+// D1_MAX
+1MX 300
+// D1_MIN
+1MN 50
+// D2_MAX
+2MX 300
+// D2_MIN
+2MN 51
+// QUIT_TIME
+QTM 10000
+// QUIT_PROB
+QPB 0.4
