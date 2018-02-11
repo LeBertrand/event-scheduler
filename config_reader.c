@@ -79,6 +79,8 @@ void get_configs(){
         printf("%d configs read in. Correct \"config\" in this dir.\n", num_configs_set);
         exit(2);
     }
+    // Close file.
+    fclose(config);
 }
 
 #endif
