@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../Event.c"
-#include "ParserOpenJobsList.h"
+#include "ParserOpenJobsList.c"
 
 // typedef struct {
 //     int timestamp;
@@ -91,7 +91,7 @@ int main(){
     // Iterate through table, handling all rows.
     while(process_row(log)) {} // All fields should be correct. Analyze.
     
-    
+    generate_report();
     
     return EXIT_SUCCESS;
 }
@@ -269,6 +269,54 @@ void generate_report()
         exit(4);
     }
     
-    // Average size of each queue is job_ticks / length of simulation.
+    /* Average size of each queue is job_ticks / length of simulation.
+        Use local variable to hold values as float for arithmatic accuracy. */
+    float arith_reg = cpu_job_ticks;
+    arith_reg /= (QUIT_TIME-INIT_TIME);
+    fprintf(report, "\tAverage CPU wait time was %f. Maximum was %d.\n",
+        ave_qu, cpu_longest_wait);
+    /*  Utilization is total time working over total time. */
+    arith_reg = cpu_time_busy;
+    arith_reg /= (QUIT_TIME-INIT_TIME);
+    fprintf(report, "\tCPU utilization is %f.\n", arith_reg );
     
+    /*  Average service time is complicated. Calculated as seconds waited by
+        number of jobs over number of jobs done. */
+    arith_reg = cpu_job_ticks / cpu_jobs_done;
+    fprintf(report, "CPU Queue size maximum wait, and average waittime -\n");
+    fprintf(report,
+        "as calculated by number of seconds waited by number of jobs\n");
+    fprintf(report, "devided by jobs done -\n\tis: Maximum - %d, Average - %f",
+        cpu_longest_wait, arith_reg);
+    
+    /*  Same statics as above. See CPU comments. */
+    arith_reg = d1_job_ticks / (QUIT_TIME-INIT_TIME);
+    fprintf(report, "\tAverage Disk 1 wait time was %f. Maximum was %d.\n",
+        arith_reg, d1_longest_wait);
+    arith_reg = d1_time_busy;
+    arith_reg /= (QUIT_TIME-INIT_TIME);
+    fprintf(report, "\tD1 utilization is %f.\n", arith_reg );
+    
+    arith_reg = d1_job_ticks / d1_jobs_done;
+    fprintf(report, "D1 Queue size maximum wait, and average waittime -\n");
+    fprintf(report,
+        "as calculated by number of seconds waited by number of jobs\n");
+    fprintf(report, "devided by jobs done -\n\tis: Maximum - %d, Average - %f",
+        d1_longest_wait, arith_reg);
+        
+    ave_qu = d2_job_ticks / (QUIT_TIME-INIT_TIME);
+    fprintf(report, "\tAverage Disk 2 wait time was %f. Maximum was %d.\n",
+        ave_qu, d2_longest_wait);
+    arith_reg = d2_time_busy;
+    arith_reg /= (QUIT_TIME-INIT_TIME);
+    fprintf(report, "\tD2 utilization is %f.\n", arith_reg );
+    
+    arith_reg = d2_job_ticks / d2_jobs_done;
+    fprintf(report, "D2 Queue size maximum wait, and average waittime -\n");
+    fprintf(report,
+        "as calculated by number of seconds waited by number of jobs\n");
+    fprintf(report, "devided by jobs done -\n\tis: Maximum - %d, Average - %f",
+        d2_longest_wait, arith_reg);
+        
+    fclose(report);
 }
