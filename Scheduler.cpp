@@ -18,17 +18,19 @@
 #include "EventQueue.cpp"
 #include "Event.c"
 #include "config_reader.c"
-#include <time.h>
 
 int ranged_rand(int, int);
 bool decide_quit();
-void place_new_event(EventQueue*);
-void one_round_get_exe(EventQueue*, Component*,Component*,Component*);
+void place_new_event(EventQueue*, int* clock, int* stamp);
+bool one_round_get_exe(EventQueue*, Component*,Component*,Component*, int* clock, int* serial_stamp);
 int log_event(Event*);
 
-int global_time;
-int serial_stamp;
 FILE* Log;
+
+// Format Strings for logging constants.
+const char* paramstring =
+    "AMN %d\nAMX %d\nCMN %d\nCMX %d\n1MN %d\n1MX %d\n2MN %d\n2MX %d\n";
+const char* npstring = "SED %d\nITM %d\nQTM %d\nQPB %f\n"; 
 
 int main()
 {
@@ -44,20 +46,26 @@ int main()
     Component disk_one;
     Component disk_two;
     
+    // TODO: moving explicit clock handling out of scheduler. Event timestamp handles time implicitly.
     // Set clock to zero.
-    global_time = INIT_TIME;
+    int global_time = INIT_TIME;
     
     // Seed random numbers.
-    srand(time(NULL));
+    srand(SEED);
     
     // Create stamp to give events their serial numbers. Start is arbitrary.
-    serial_stamp = 1000;
+    int serial_stamp = 1000;
     
     // Set up and open log file.
     Log = fopen("DES-Log.csv", "w");
     
     // Setup constants
     get_configs();
+    
+    // Record all constants in first line of log.
+    fprintf(Log, paramstring,ARRIVAL_MIN,ARRIVAL_MAX,CPU_MIN,CPU_MAX,D1_MIN,
+        D1_MAX,D2_MIN,D2_MAX);
+    fprintf(Log, npstring, SEED,INIT_TIME,QUIT_TIME,QUIT_PROB);
     
     // Put end of simulation in Event Queue.
     Event* conclusion = (Event*) malloc(sizeof(Event));
@@ -68,10 +76,15 @@ int main()
     
     // Setup Complete.
     
-    one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two);
-    one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two);
-    one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two);
-    one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two);
+    // Run sim until reaching end sim.
+    while(
+        one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two,
+            &global_time, &serial_stamp) ) {}
+    
+    
+    // one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two, &global_time, &serial_stamp);
+    // one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two, &global_time, &serial_stamp);
+    // one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two, &global_time, &serial_stamp);
     
     return 0;
 }
@@ -88,22 +101,23 @@ int main()
     code without passing pointers to member objects. However, Object Oriented
     Scheduler class seemed more trouble than it was worth, so Scheduler does
     pass pointers to its own fields. */
- void one_round_get_exe(EventQueue* eq, Component* cpu, Component* disk_one, Component* disk_two)
- {
-     // Generate CPU arrival
-     place_new_event(eq);
+bool one_round_get_exe(EventQueue* eq, Component* cpu, Component* disk_one,
+    Component* disk_two, int* clock, int* serial_stamp_ptr)
+{
+    // Generate CPU arrival
+    place_new_event(eq, clock, serial_stamp_ptr);
      
     // Find next job and advance time keeping.
     Event* next = eq->getNext();
     int job_length;
-    // TODO: Major timekeeping considerations. In every single case, time advances differently.
+    *clock = next->timestamp;
     
     //Log event
     log_event(next);
     
     // Handle job.
     switch(next->jobtype){
-        // TODO: Standardized logging step in all cases.
+        
         case JOB_ARRIVE_CPU:
             // TODO: All logic relies on current_wait being 0 when the queue is
             //  empty. Can I totally factor out the idle flag?
@@ -116,9 +130,10 @@ int main()
             }
 		
 		    // Calculate job length - calculate now only for calculating true
-		    // end time - EventQueue doesn't know the wait time, only queue lengths.
+		    /* end time - Scheduler doesn't know the wait time.
+		        It just increases timestamp by a reasonable wait. */
 		    job_length = ranged_rand(CPU_MIN, CPU_MAX);
-		    next->timestamp = global_time + job_length + cpu->getTime();
+		    next->timestamp += job_length;
 		
 		    // Make event a cpu completion.
 		    next->jobtype = JOB_FINISH_CPU;
@@ -174,9 +189,10 @@ int main()
             }
             
 		    // Calculate job length - calculate now only for calculating true
-		    // end time - EventQueue doesn't know the wait time, only queue lengths.
+		    /* end time - Scheduler doesn't know the wait time.
+		        It just increases timestamp by a reasonable wait. */
 		    job_length = ranged_rand(D1_MIN, D1_MAX);
-		    next->timestamp = global_time + job_length + disk_one->getTime();
+		    next->timestamp += job_length;
 		
 		    // Make event a disk completion.
 		    next->jobtype = JOB_FINISH_D1;
@@ -187,7 +203,8 @@ int main()
             break;
         
         case JOB_ARRIVE_D2:
-            // TODO: See above thoughts on refactoring in first case.
+            // TODO: Options to refactor and eliminate FIFO class.
+            
             if(disk_two->Getidle()){
                 // Disk idle so job doesn't wait. Set idle false.
                 disk_two->Setidle(false);
@@ -197,9 +214,10 @@ int main()
             }
             
 		    // Calculate job length - calculate now only for calculating true
-		    // end time - EventQueue doesn't know the wait time, only queue lengths.
+		    /* end time - Scheduler doesn't know the wait time.
+		        It just increases timestamp by a reasonable wait. */
 		    job_length = ranged_rand(D2_MIN, D2_MAX);
-		    next->timestamp = global_time + job_length + disk_two->getTime();
+		    next->timestamp += job_length;
 		
 		    // Make event a disk completion.
 		    next->jobtype = JOB_FINISH_D2;
@@ -228,10 +246,12 @@ int main()
             disk_two->nextJob();
             
             break;
-            
+        
+        case END_SIM:
+            return false;
     }
      
-    return;
+    return true;
 }
  
 /*
@@ -240,13 +260,14 @@ int main()
  *  TODO: This is a bad way to distribute events. Can't I just fill the queue\
             during initialization, and then stop generating events?
  */
-void place_new_event(EventQueue* eq)
+void place_new_event(EventQueue* eq, int* clock, int* serial_stamp)
 {
     Event* ev = (Event*) malloc(sizeof(Event));
     // Give event next serial number available.
-    ev->serial = serial_stamp++;
+    ev->serial = *serial_stamp;
+    (*serial_stamp)+=1;
     // Record event as occuring
-    ev->timestamp = global_time + ranged_rand(ARRIVAL_MIN, ARRIVAL_MAX);
+    ev->timestamp = *clock + ranged_rand(ARRIVAL_MIN, ARRIVAL_MAX);
     // Record job as a CPU arrival.
     ev->jobtype = JOB_ARRIVE_CPU;
     

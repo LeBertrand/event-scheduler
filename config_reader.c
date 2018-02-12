@@ -17,7 +17,7 @@
 #define CONFIGS
 
 int ARRIVAL_MIN, ARRIVAL_MAX, INIT_TIME, QUIT_TIME, CPU_MIN, CPU_MAX, D1_MIN, D1_MAX,
-    D2_MIN, D2_MAX;
+    D2_MIN, D2_MAX, SEED;
     
 float QUIT_PROB;
 void get_configs(){
@@ -73,12 +73,15 @@ void get_configs(){
         } else if(!strncmp(config_line,"QPB",3)){
             QUIT_PROB = atof(config_line+4);
             num_configs_set++;
+        } else if(!strncmp(config_line,"SED",3)){
+            SEED = atof(config_line+4);
+            num_configs_set++;
         }
     } // Now leaving loop. Done reading file.
     
     
     // Configs all read in? Last check before configs are trusted.
-    if(num_configs_set != 11){
+    if(num_configs_set != 12){
         printf("%d configs read in. Correct \"config\" in this dir.\n", num_configs_set);
         exit(2);
     }
