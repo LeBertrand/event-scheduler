@@ -7,6 +7,7 @@ LinkedListQueue::LinkedListQueue()
 {
     // Constructor - set up empty list
     head = NULL;
+    // Shortcut to last node, to make pushing quicker.
     last = NULL;
 
     length = 0;
@@ -32,16 +33,10 @@ LinkedListQueue::LinkedListQueue(char* msg)
 
 LinkedListQueue::~LinkedListQueue()
 {
+    /* Iterate through list, freeing each node by popping it. */
     while(head != NULL){
-        last = head->next;
-        free(head);
-        head = last;
+        pop();
     }
-    head = NULL;
-    free(last);
-    last = NULL;
-    free(name);
-    
 }
 
 void LinkedListQueue::push(int x){
@@ -56,17 +51,23 @@ void LinkedListQueue::push(int x){
         last = insertion;
     } else {
         last->next = insertion;
+        last = insertion;
     }
     length++;
 }
 
 int LinkedListQueue::pop()
 {
+    /*  Inelegant solution. Replace with exception. */
+    if(head==NULL) return -1;
+    // Create pointer for use later to free Node.
     Node* take = head;
+    // Hang on to return value before freeing.
     int val = take->data;
+    // Move head to next node.
     head = head->next;
     length--;
-
+    // Free space from node that was head.
     free(take);
     return val;
 }

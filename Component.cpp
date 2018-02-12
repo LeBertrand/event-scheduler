@@ -7,12 +7,13 @@ Component::Component()
     LinkedListQueue qu;
     // No wait time before beginning job.
     current_wait = 0;
+    idle = true;
 }
 
 Component::~Component()
 {
     // Free up queue space.
-    delete &qu;
+    
 }
 
 Component& Component::operator=(const Component& rhs)

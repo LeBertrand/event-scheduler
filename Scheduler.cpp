@@ -17,20 +17,22 @@
 #include "EventQueue.h"
 #include "EventQueue.cpp"
 #include "Event.c"
-#include "config.h"
+#include "config_reader.c"
 #include <time.h>
 
 int ranged_rand(int, int);
 bool decide_quit();
-void place_new_event(Component*);
+void place_new_event(EventQueue*);
 void one_round_get_exe(EventQueue*, Component*,Component*,Component*);
+int log_event(Event*);
 
 int global_time;
 int serial_stamp;
+FILE* Log;
 
 int main()
 {
-    /*  Dont bother seperating into a setup function.
+    /*  Don't bother seperating into a setup function.
         Setup consists entirely of setting variables, which would have to be
         declared here and passed by location anyway. */
     
@@ -43,7 +45,7 @@ int main()
     Component disk_two;
     
     // Set clock to zero.
-    global_time = 0;
+    global_time = INIT_TIME;
     
     // Seed random numbers.
     srand(time(NULL));
@@ -51,10 +53,25 @@ int main()
     // Create stamp to give events their serial numbers. Start is arbitrary.
     serial_stamp = 1000;
     
+    // Set up and open log file.
+    Log = fopen("DES-Log.csv", "w");
+    
+    // Setup constants
+    get_configs();
+    
+    // Put end of simulation in Event Queue.
+    Event* conclusion = (Event*) malloc(sizeof(Event));
+    conclusion->serial=999;
+    conclusion->jobtype=END_SIM;
+    conclusion->timestamp=QUIT_TIME;
+    event_queue.insert(conclusion);
+    
     // Setup Complete.
     
     one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two);
-    
+    one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two);
+    one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two);
+    one_round_get_exe(&event_queue, &cpu, &disk_one, &disk_two);
     
     return 0;
 }
@@ -74,11 +91,15 @@ int main()
  void one_round_get_exe(EventQueue* eq, Component* cpu, Component* disk_one, Component* disk_two)
  {
      // Generate CPU arrival
-     place_new_event(cpu);
+     place_new_event(eq);
      
     // Find next job and advance time keeping.
     Event* next = eq->getNext();
-    int job_length
+    int job_length;
+    // TODO: Major timekeeping considerations. In every single case, time advances differently.
+    
+    //Log event
+    log_event(next);
     
     // Handle job.
     switch(next->jobtype){
@@ -103,7 +124,7 @@ int main()
 		    next->jobtype = JOB_FINISH_CPU;
 
 		    // Put completion into event heap.
-		    eq->pushJob(next);
+		    eq->insert(next);
     
             break;
             
@@ -161,7 +182,7 @@ int main()
 		    next->jobtype = JOB_FINISH_D1;
 
 		    // Put completion into event heap.
-		    eq->pushJob(next);
+		    eq->insert(next);
     
             break;
         
@@ -184,7 +205,7 @@ int main()
 		    next->jobtype = JOB_FINISH_D2;
 
 		    // Put completion into event heap.
-		    eq->pushJob(next);
+		    eq->insert(next);
     
             break;
         
@@ -219,7 +240,7 @@ int main()
  *  TODO: This is a bad way to distribute events. Can't I just fill the queue\
             during initialization, and then stop generating events?
  */
-void place_new_event(Component* cpu)
+void place_new_event(EventQueue* eq)
 {
     Event* ev = (Event*) malloc(sizeof(Event));
     // Give event next serial number available.
@@ -229,6 +250,7 @@ void place_new_event(Component* cpu)
     // Record job as a CPU arrival.
     ev->jobtype = JOB_ARRIVE_CPU;
     
+    eq->insert(ev);
 }
 
 /*
@@ -247,4 +269,10 @@ bool decide_quit()
 {
     int roll = ranged_rand(0,101);
     return (roll > QUIT_PROB*100);
+}
+
+int log_event(Event* ev)
+{
+    return fprintf(Log, "%d,%d,%d\n",
+        ev->timestamp, ev->jobtype, ev->serial);
 }

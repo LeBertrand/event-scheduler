@@ -50,6 +50,8 @@ int process_row(FILE*);
  */
 int read_row_val(char* row_chars_read, char* row_buf);
 
+void generate_report();
+
 
 // *** Fields ***
 
@@ -85,6 +87,11 @@ int main(){
     FILE* log = fopen("DES-Log.csv", "r");
     // Set up linked list to store open jobs with their opening times
     JobListInit();
+    
+    // Iterate through table, handling all rows.
+    while(process_row(log)) {} // All fields should be correct. Analyze.
+    
+    
     
     return EXIT_SUCCESS;
 }
@@ -252,4 +259,16 @@ int read_row_val(char* row_chars_read, char* row_buf)
     } // both counters should be updated to reflect number of chars read.
     
     return atoi(val);
+}
+
+void generate_report()
+{
+    FILE* report = fopen("DES-Stats.txt", "w");
+    if(report==NULL){
+        printf("Can't write to file. Exiting.\n\n");
+        exit(4);
+    }
+    
+    // Average size of each queue is job_ticks / length of simulation.
+    
 }

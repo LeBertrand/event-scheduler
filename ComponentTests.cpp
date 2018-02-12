@@ -3,18 +3,28 @@
 
 int main()
 {
-    Component s1, s2;
+    Component s1;
     int last_serial;
     
     s1.pushJob(42);
     
     last_serial = s1.nextJob();
     // Start working on job.
-    s1.setTime(15);
+    s1.increaseTime(15);
     
+    s1.pushJob(43);
+    s1.increaseTime(5);
     // Something else takes 8 seconds.
     s1.advanceTime(7);
-    /*
-    std::cout << "Is Server 1 Idle? " << s1.Getidle << std::endl;
-    std::cout << "How many jobs waiting? " << s1.Getjobs_waiting << std::endl;*/
+    
+    s1.pushJob(44);
+    s1.increaseTime(25);
+    s1.advanceTime(50);
+    
+    s1.nextJob();
+    s1.nextJob();
+    s1.nextJob();
+    
+    s1.pushJob(45);
+    s1.pushJob(46);
 }

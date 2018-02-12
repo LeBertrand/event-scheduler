@@ -16,7 +16,7 @@
 #ifndef CONFIGS
 #define CONFIGS
 
-int ARRIVAL_MIN, ARRIVAL_MAX, QUIT_TIME, CPU_MIN, CPU_MAX, D1_MIN, D1_MAX,
+int ARRIVAL_MIN, ARRIVAL_MAX, INIT_TIME, QUIT_TIME, CPU_MIN, CPU_MAX, D1_MIN, D1_MAX,
     D2_MIN, D2_MAX;
     
 float QUIT_PROB;
@@ -45,6 +45,9 @@ void get_configs(){
         }
         else if(!strncmp(config_line,"AMN",3)){
             ARRIVAL_MIN = atoi(config_line+4);
+            num_configs_set++;
+        } else if(!strncmp(config_line,"ITM",3)){
+            INIT_TIME = atof(config_line+4);
             num_configs_set++;
         } else if(!strncmp(config_line,"QTM",3)){
             QUIT_TIME = atoi(config_line+4);
@@ -75,7 +78,7 @@ void get_configs(){
     
     
     // Configs all read in? Last check before configs are trusted.
-    if(num_configs_set != 10){
+    if(num_configs_set != 11){
         printf("%d configs read in. Correct \"config\" in this dir.\n", num_configs_set);
         exit(2);
     }

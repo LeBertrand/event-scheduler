@@ -22,7 +22,7 @@ class EventQueue
 
         /*
          * Insert item at end of array.
-         * Contains book-keeping, so can be used externally by scheduler.
+         * Contains book-keeping, so can be used externally.
          */
         bool insert(Event* entry);
 
