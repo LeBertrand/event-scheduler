@@ -21,10 +21,18 @@
  *  As always, GIGA.
  */
 
+// Hack to let me use includes without changing anything
+
+#ifndef CONFIGFILENAME
+#define CONFIGFILENAME "DES-Log.csv"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../Event.c"
-#include "ParserOpenJobsList.c"
+#include "../config_reader.c"
+#include "ParserOpenJobsList.h"
+
 
 // typedef struct {
 //     int timestamp;
@@ -87,6 +95,8 @@ int main(){
     FILE* log = fopen("DES-Log.csv", "r");
     // Set up linked list to store open jobs with their opening times
     JobListInit();
+    
+    get_configs();
     
     // Iterate through table, handling all rows.
     while(process_row(log)) {} // All fields should be correct. Analyze.
@@ -159,15 +169,23 @@ int process_row(FILE* log)
             // Record one more job is currently in queue or processing.
             cpu_jobs_open++;
             
+            // Put job into linked list of open jobs to store start time.
+            open_job(current_time, current_serial);
+            
+            break; 
+            
         case JOB_ARRIVE_D1:
             // Record one more job is currently in queue or processing.
             d1_jobs_open++;
             
+            // Put job into linked list of open jobs to store start time.
+            open_job(current_time, current_serial);
+            
+            break; 
+            
         case JOB_ARRIVE_D2:
             // Record one more job is currently in queue or processing.
             d2_jobs_open++;
-            
-            /* *** All arrival cases ***/
             
             // Put job into linked list of open jobs to store start time.
             open_job(current_time, current_serial);
@@ -274,7 +292,7 @@ void generate_report()
     float arith_reg = cpu_job_ticks;
     arith_reg /= (QUIT_TIME-INIT_TIME);
     fprintf(report, "\tAverage CPU wait time was %f. Maximum was %d.\n",
-        ave_qu, cpu_longest_wait);
+        arith_reg, cpu_longest_wait);
     /*  Utilization is total time working over total time. */
     arith_reg = cpu_time_busy;
     arith_reg /= (QUIT_TIME-INIT_TIME);
@@ -304,9 +322,9 @@ void generate_report()
     fprintf(report, "devided by jobs done -\n\tis: Maximum - %d, Average - %f",
         d1_longest_wait, arith_reg);
         
-    ave_qu = d2_job_ticks / (QUIT_TIME-INIT_TIME);
+    arith_reg = d2_job_ticks / (QUIT_TIME-INIT_TIME);
     fprintf(report, "\tAverage Disk 2 wait time was %f. Maximum was %d.\n",
-        ave_qu, d2_longest_wait);
+        arith_reg, d2_longest_wait);
     arith_reg = d2_time_busy;
     arith_reg /= (QUIT_TIME-INIT_TIME);
     fprintf(report, "\tD2 utilization is %f.\n", arith_reg );

@@ -13,15 +13,22 @@
     from executing.
  */
  
+// Hack to let me use different config value still including this file
+#ifndef CONFIGFILENAME
+#define CONFIGFILENAME "config"
+#endif
+ 
 #ifndef CONFIGS
 #define CONFIGS
+
+const char num_configs_given = 12;
 
 int ARRIVAL_MIN, ARRIVAL_MAX, INIT_TIME, QUIT_TIME, CPU_MIN, CPU_MAX, D1_MIN, D1_MAX,
     D2_MIN, D2_MAX, SEED;
     
 float QUIT_PROB;
 void get_configs(){
-    FILE* config = fopen("config", "r");
+    FILE* config = fopen(CONFIGFILENAME, "r");
     
     if(config == NULL){
         puts("Unable to find config file. Ending program.");
@@ -33,7 +40,7 @@ void get_configs(){
     
     // Read in each line of file.
     char config_line[11];
-    while(fgets(config_line, 11, config)){
+    while(fgets(config_line, 11, config) && num_configs_set < num_configs_given){
         /* Can't easily switch on string, and don't want to use numbered
         config codes, because editing config would be harder. */
         
@@ -81,7 +88,7 @@ void get_configs(){
     
     
     // Configs all read in? Last check before configs are trusted.
-    if(num_configs_set != 12){
+    if(num_configs_set != num_configs_given){
         printf("%d configs read in. Correct \"config\" in this dir.\n", num_configs_set);
         exit(2);
     }
