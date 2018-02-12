@@ -1,11 +1,3 @@
-/*
- *  Implement Linked list of open jobs. Data structure to be used only to record
-    what jobs are open. Use Linked list of custom nodes, because edits will be
-    frequent and list should usually be short enough that sorting doesn't pay
-    off. Assume that lower timestamps are most likely to be searched, and
-    insert before next lowest timestamp.
- */
-
 #include "ParserOpenJobsList.h"
 
 

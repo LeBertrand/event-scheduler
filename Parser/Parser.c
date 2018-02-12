@@ -13,31 +13,36 @@
     string and then the string into six runs of the atoi function to retrieve values.
     
  *  Fail conditions: This code assumes the file in is created by Event Logger.
-    If given a CSV containing nubmer longer than allowance, unexpected chars,
-    rows of a different size, or anything other than the six numbers expected,
+    If given a CSV containing number longer than allowance, unexpected chars,
+    rows of a different size, or anything other than the three numbers expected,
     it will crash.
     Current Allowances = {timestamp:6,jobtype:2,serial:5,cpu_qlen:3,d1_qlen:3,d2_qlen:3}
+    
+ *  As always, GIGA.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "Event.c"
+#include "../Event.c"
+#include "ParserOpenJobsList.h"
 
-typedef struct {
-    int timestamp;
-    EventCode jobtype;
-    int serial;
-    int cpu_qlen;
-    int d1_qlen;
-    int d2_qlen;
-} Log_Row;
+// typedef struct {
+//     int timestamp;
+//     EventCode jobtype;
+//     int serial;
+//     int cpu_qlen;
+//     int d1_qlen;
+//     int d2_qlen;
+// } Log_Row;
+
+// *** Function Headers ***
 
 /*
  *  Function contains step to perform on each row.
  *  Read in log data for analysis.
  *  Takes pointer to file containing data.
  */
-void process_row(FILE*);
+int process_row(FILE*);
 
 /*
  *  Read individual value out of comma seperated row.
@@ -45,20 +50,32 @@ void process_row(FILE*);
  */
 int read_row_val(char* row_chars_read, char* row_buf);
 
+
+// *** Fields ***
+
 // Fields store busy times as number of ticks.
-int cpu_qmax, d1_qmax, d2_qmax,
+unsigned int cpu_qmax = 0, d1_qmax = 0, d2_qmax = 0,
 
 // Fields store number of jobs completed. (Called num_jobs in some notes.)
-cpu_jobs_done, d1_jobs_done, d2_jobs_done,
+cpu_jobs_done = 0, d1_jobs_done = 0, d2_jobs_done = 0,
 
 // Fields store time busy, measured in ticks
-cpu_time_busy, d1_time_busy, d2_time_busy,
+cpu_time_busy = 0, d1_time_busy = 0, d2_time_busy = 0,
 
 // Fields store time waited for each component, to calculate response time
-cpu_time_waited_for, d1_time_waited_for, d2_time_waited_for,
+cpu_time_waited_for = 0, d1_time_waited_for = 0, d2_time_waited_for = 0,
+cpu_longest_wait = 0, d1_longest_wait = 0, d2_longest_wait = 0,
+
+/*  Imaginary unit used to calculate average length, job-ticks, which is number
+    of jobs waiting, times length waited */
+cpu_job_ticks = 0, d1_job_ticks = 0, d2_job_ticks = 0,
+
+// Number of jobs currently in process or queue at each component.
+cpu_jobs_open = 0, d1_jobs_open = 0, d2_jobs_open = 0,
 
 // Fields to hold state during processing of one row.
-last_row_time = 0, current_time, current_row_duration;
+last_row_time = 0, current_time, current_row_duration, current_serial;
+EventCode current_ec;
 
 // Allocate holder for rows instead of adding allocation step to process_row.
 char buf[25];
@@ -66,6 +83,8 @@ char val[7];
 
 int main(){
     FILE* log = fopen("DES-Log.csv", "r");
+    // Set up linked list to store open jobs with their opening times
+    JobListInit();
     
     return EXIT_SUCCESS;
 }
@@ -74,7 +93,12 @@ int main(){
 /*
  *  Handle next row in log file.
  *  Read in row to buf.
- *  
+ 
+ *  Scan in six values from CSV row and store in variables.
+ 
+ *  This function mostly updates stats. All job finish events are treated as end
+    of a "time frame" or exectution of a job, so 
+ 
  *  return  -   0 if no more rows, else non-zero.
  */
 int process_row(FILE* log)
@@ -85,11 +109,117 @@ int process_row(FILE* log)
         return 0;
     }
     
-    char row_index;
+    // Variable records how many chars of current row have been read.
+    char row_index = 0;
     // Set individual values.
     current_time = read_row_val(&row_index, buf);
     current_row_duration = current_time - last_row_time;
     
+    current_ec = (EventCode) read_row_val(&row_index, buf);
+    
+    current_serial = read_row_val(&row_index, buf);
+    
+    /* Before updating idle statuses or queue lengths, use old component states
+    to update stats. */
+    
+    // Check and update max queue lengths
+    if(cpu_jobs_open > cpu_qmax)
+        cpu_qmax = cpu_jobs_open;
+    if(d1_jobs_open > d1_qmax)
+        d1_qmax = d1_jobs_open;
+    if(d2_jobs_open > d2_qmax)
+        d2_qmax = d2_jobs_open;
+        
+    /* Update counters of ticks spent working by each component and job-ticks
+        waiting in queues of each component. */
+    if(cpu_jobs_open){
+        cpu_time_busy+=current_row_duration;
+        cpu_job_ticks+=(cpu_jobs_open-1)*current_row_duration;
+    }
+    if(d1_jobs_open){
+        d1_time_busy+=current_row_duration;
+        d1_job_ticks+=(d1_jobs_open-1)*current_row_duration;
+    }
+    if(d2_jobs_open){
+        d2_time_busy+=current_row_duration;
+        d2_job_ticks+=(d2_jobs_open-1)*current_row_duration;
+    }
+    
+    int job_length;
+    // Process event
+    switch(current_ec){
+        case JOB_ARRIVE_CPU:
+            // Record one more job is currently in queue or processing.
+            cpu_jobs_open++;
+            
+        case JOB_ARRIVE_D1:
+            // Record one more job is currently in queue or processing.
+            d1_jobs_open++;
+            
+        case JOB_ARRIVE_D2:
+            // Record one more job is currently in queue or processing.
+            d2_jobs_open++;
+            
+            /* *** All arrival cases ***/
+            
+            // Put job into linked list of open jobs to store start time.
+            open_job(current_time, current_serial);
+            
+            break; // All arrivals cases handled.
+            
+        case JOB_FINISH_CPU:
+            // Increment number of completed jobs.
+            cpu_jobs_done++;
+            // Decrement number of open jobs.
+            cpu_jobs_open--;
+            // Remove job from list of open jobs, and calculate time job took.
+            job_length = current_time - close_job(current_serial);
+            // Check if this job is the new longest wait.
+            if(job_length > cpu_longest_wait){
+                cpu_longest_wait = job_length;
+            }
+            // Record time job spent waiting for CPU.
+            cpu_time_waited_for += job_length;
+            
+            break;
+            
+        case JOB_FINISH_D1:
+            // Increment number of completed jobs.
+            d1_jobs_done++;
+            // Decrement number of open jobs.
+            d1_jobs_open--;
+            // Remove job from list of open jobs, and calculate time job took.
+            job_length = current_time - close_job(current_serial);
+            // Check if this job is the new longest wait.
+            if(job_length > d1_longest_wait){
+                d1_longest_wait = job_length;
+            }
+            // Record time job spent waiting.
+            d1_time_waited_for += job_length;
+            
+            break;
+            
+        case JOB_FINISH_D2:
+            // Increment number of completed jobs.
+            d2_jobs_done++;
+            // Decrement number of open jobs.
+            d2_jobs_open--;
+            // Remove job from list of open jobs, and calculate time job took.
+            job_length = current_time - close_job(current_serial);
+            // Check if this job is the new longest wait.
+            if(job_length > d2_longest_wait){
+                d2_longest_wait = job_length;
+            }
+            // Record time job spent waiting.
+            d2_time_waited_for += job_length;
+            
+            break;
+    }
+    
+    // Clean up for next row. 
+    last_row_time = current_time;
+    // Return indicates I haven't hit EOF.
+    return 1;
 }
 
 /*
@@ -116,7 +246,9 @@ int read_row_val(char* row_chars_read, char* row_buf)
     for(this_val_digits = 0;
         val[this_val_digits]!=',' && val[this_val_digits]!='\n';
         this_val_digits++){
-        val[this_val_digits] = row_buf[row_chars_read++];
+        val[this_val_digits] = row_buf[*row_chars_read];
+        // Record one more char read from row.
+        *row_chars_read+=1;
     } // both counters should be updated to reflect number of chars read.
     
     return atoi(val);
