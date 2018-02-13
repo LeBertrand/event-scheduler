@@ -20,7 +20,7 @@ close_job.o: close_job.c
 	
 # Compile command
 compile:
-	gcc -o stats-reporter.exe Parser.c -L. -lParserJobs
+	g++ -o stats-reporter.exe Parser.c -L. -lParserJobs
 	
 # remove object
 clean:

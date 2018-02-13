@@ -66,6 +66,8 @@ int main()
     fprintf(Log, paramstring,ARRIVAL_MIN,ARRIVAL_MAX,CPU_MIN,CPU_MAX,D1_MIN,
         D1_MAX,D2_MIN,D2_MAX);
     fprintf(Log, npstring, SEED,INIT_TIME,QUIT_TIME,QUIT_PROB);
+    // Print indication of log begin
+    fprintf(Log, "!Start\n");
     
     // Put end of simulation in Event Queue.
     Event* conclusion = (Event*) malloc(sizeof(Event));

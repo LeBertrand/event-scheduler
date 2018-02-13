@@ -1,0 +1,10 @@
+
+#ifndef ST_STRUCT
+#define ST_STRUCT
+
+typedef struct SerialTimeNode {
+    int serial;
+    int time;
+    SerialTimeNode* next;
+} SerialTimeNode;
+#endif

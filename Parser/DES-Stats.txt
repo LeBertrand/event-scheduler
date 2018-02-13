@@ -1,0 +1,16 @@
+	Average CPU wait time was 17.524000. Maximum was 29.
+	CPU utilization is 0.762000.
+CPU Queue size maximum wait, and average waittime -
+as calculated by number of seconds waited by number of jobs
+devided by jobs done -
+	Maximum - 29, Average - 21.000000	Average Disk 1 wait time was 6.000000. Maximum was 293.
+	D1 utilization is 0.791000.
+D1 Queue size maximum wait, and average waittime -
+as calculated by number of seconds waited by number of jobs
+devided by jobs done -
+	Maximum - 293, Average - 258.000000	Average Disk 2 wait time was 5.000000. Maximum was 101.
+	D2 utilization is 0.557000.
+D2 Queue size maximum wait, and average waittime -
+as calculated by number of seconds waited by number of jobs
+devided by jobs done -
+	Maximum - 101, Average - 111.000000

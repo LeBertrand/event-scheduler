@@ -1,3 +1,13 @@
+#ifndef ST_STRUCT
+#define ST_STRUCT
+
+typedef struct SerialTimeNode {
+    int serial;
+    int time;
+    struct SerialTimeNode *next;
+} SerialTimeNode;
+#endif
+
 /*
  *  Implement Linked list of open jobs. Data structure to be used only to record
     what jobs are open. Use Linked list of custom nodes, because edits will be
@@ -16,22 +26,16 @@
 #ifndef OPENJOBS_H
 #define OPENJOBS_H
 
-typedef struct SerialTimeNode {
-    SerialTimeNode* next;
-    int time;
-    int serial;
-} SerialTimeNode;
-
 // Define Null Node.
 SerialTimeNode* NullSTN;
 
-SerialTimeNode* head;
+SerialTimeNode *head, *last;
 
-void JobListInit()
+void JobListInit(SerialTimeNode* NullNode)
 {
-    NullSTN->time = INT_MAX;
-    NullSTN->serial = 0;
-    NullSTN->next = NullSTN;
+    NullNode->time = INT_MAX;
+    NullNode->serial = 0;
+    NullNode->next = NullNode;
     
     head = NullSTN;
 }

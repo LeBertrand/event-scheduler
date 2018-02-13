@@ -27,11 +27,13 @@
 #define CONFIGFILENAME "DES-Log.csv"
 #endif
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../Event.c"
 #include "../config_reader.c"
 #include "ParserOpenJobsList.h"
+#include "ParserOpenJobsList.c"
 
 
 // typedef struct {
@@ -42,6 +44,7 @@
 //     int d1_qlen;
 //     int d2_qlen;
 // } Log_Row;
+
 
 // *** Function Headers ***
 
@@ -57,6 +60,11 @@ int process_row(FILE*);
  *  return  -   integer value retrieved from row.
  */
 int read_row_val(char* row_chars_read, char* row_buf);
+
+/*
+ *  Skip through open file until line before table begins.
+ */
+void skip_to_table(FILE*);
 
 void generate_report();
 
@@ -84,7 +92,8 @@ cpu_job_ticks = 0, d1_job_ticks = 0, d2_job_ticks = 0,
 cpu_jobs_open = 0, d1_jobs_open = 0, d2_jobs_open = 0,
 
 // Fields to hold state during processing of one row.
-last_row_time = 0, current_time, current_row_duration, current_serial;
+last_row_time = 0, current_time, current_serial;
+int current_row_duration;
 EventCode current_ec;
 
 // Allocate holder for rows instead of adding allocation step to process_row.
@@ -93,15 +102,22 @@ char val[7];
 
 int main(){
     FILE* log = fopen("DES-Log.csv", "r");
-    // Set up linked list to store open jobs with their opening times
-    JobListInit();
+    
+    // Set up linked list to store open jobs with their opening times. Pass in zero location.
+    NullSTN = (SerialTimeNode*) malloc(sizeof(SerialTimeNode));
+    JobListInit(NullSTN);
     
     get_configs();
     
+    // Fast Forward to to table
+    skip_to_table(log);
     // Iterate through table, handling all rows.
     while(process_row(log)) {} // All fields should be correct. Analyze.
     
     generate_report();
+    
+    // Clean up.
+    free(NullSTN);
     
     return EXIT_SUCCESS;
 }
@@ -260,7 +276,9 @@ int process_row(FILE* log)
  */
 int read_row_val(char* row_chars_read, char* row_buf)
 {
-    char this_val_digits = 0;
+    char field_chars_read = 0;
+    // Flush digits from buffer
+    strcpy(val,"......");
     /*  
         Read digits until a comma or NL has been copied,
             updating the number of chars read, according to both the local
@@ -268,13 +286,13 @@ int read_row_val(char* row_chars_read, char* row_buf)
         this_val_digits records how many digits have been read for the current
         value.
     */
-    for(this_val_digits = 0;
-        val[this_val_digits]!=',' && val[this_val_digits]!='\n';
-        this_val_digits++){
-        val[this_val_digits] = row_buf[*row_chars_read];
-        // Record one more char read from row.
-        *row_chars_read+=1;
-    } // both counters should be updated to reflect number of chars read.
+    while(isdigit(row_buf[*row_chars_read])){
+        val[field_chars_read++] = row_buf[*row_chars_read];
+        (*row_chars_read)++;
+    } // Copy field into smaller buffer for atoi call.
+    
+    // Advance to next digit.
+    while(!isdigit(row_buf[*row_chars_read])) (*row_chars_read)++;
     
     return atoi(val);
 }
@@ -304,7 +322,7 @@ void generate_report()
     fprintf(report, "CPU Queue size maximum wait, and average waittime -\n");
     fprintf(report,
         "as calculated by number of seconds waited by number of jobs\n");
-    fprintf(report, "devided by jobs done -\n\tis: Maximum - %d, Average - %f",
+    fprintf(report, "devided by jobs done -\n\tMaximum - %d, Average - %f",
         cpu_longest_wait, arith_reg);
     
     /*  Same statics as above. See CPU comments. */
@@ -319,7 +337,7 @@ void generate_report()
     fprintf(report, "D1 Queue size maximum wait, and average waittime -\n");
     fprintf(report,
         "as calculated by number of seconds waited by number of jobs\n");
-    fprintf(report, "devided by jobs done -\n\tis: Maximum - %d, Average - %f",
+    fprintf(report, "devided by jobs done -\n\tMaximum - %d, Average - %f",
         d1_longest_wait, arith_reg);
         
     arith_reg = d2_job_ticks / (QUIT_TIME-INIT_TIME);
@@ -333,8 +351,14 @@ void generate_report()
     fprintf(report, "D2 Queue size maximum wait, and average waittime -\n");
     fprintf(report,
         "as calculated by number of seconds waited by number of jobs\n");
-    fprintf(report, "devided by jobs done -\n\tis: Maximum - %d, Average - %f",
+    fprintf(report, "devided by jobs done -\n\tMaximum - %d, Average - %f",
         d2_longest_wait, arith_reg);
         
     fclose(report);
+}
+
+void skip_to_table(FILE* filein)
+{
+    char buf[30];
+    while(strncmp(fgets(buf,30,filein),"!Start",6)) {}
 }
