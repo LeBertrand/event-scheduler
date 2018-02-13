@@ -1,6 +1,7 @@
 /*
  *  Dummy config values, to be used for testing scheduler.
- *  Real config will be read in from file.
+ *  Real config will be read in from file. Include guard matches real configs,
+    so this won't be included.
  */
  
  
