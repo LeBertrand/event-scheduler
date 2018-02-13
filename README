@@ -1,0 +1,58 @@
+This code written by:
+
+Shmuel Jacobs
+shmuel.jacobs@temple.edu
+
+for System Programming and Operating Systems Spring 2018 at Temple University
+
+Discrete Event Simulator in C/C++
+
+The code in the "event-scheduler" directory can be compiled into the
+simulation. To compile in bash, go to that directory and use the 'make compile'
+command. Executable 'DESimulator.exe' will scan for config file, run simulation
+using values from configs and log to 'DES-Log.csv' (overwriting if it already
+exists).
+
+Code:
+
+Event.c defines the Event struct, the basis of the simulation. An event consists
+of a timestamp, a unique serial number that moves around the system until a job
+exits the system, and an eventype. Event types are enumerated in Event.c.
+
+The LinkedListQueue implements integer queue as a linked list. It has public
+methods allowing removal from the front of the queue and insertion at the back
+of the queue. The Component class uses the integer queue to store serial numbers
+of waiting jobs, and also remembers how many jobs are waiting and if one is in 
+progress.
+
+EventQueue implements heap over an array of Events. After every insertion or
+removal, it re-heaps to put the lowest timestamp (next event up) at the front of
+the list. (Occasionally, the time can move backwards slightly, but the log
+reflects this, so it's not a problem.) 
+
+The main class of the simulation is Scheduler. It creates an event queue and
+three components, CPU, D1 D2. It inserts an "End Simulation" event in the event
+queue, and then cycles, placing a new arrival event in the heap, and then taking
+and handling an event from the queue. This continues until the "End Simulation"
+event is taken from the heap. The rules for the simulation are scanned in from
+"config". The comments in that file identify each code and what it sets. The
+config file can be edited, but the format must be preserved.
+Scheduler also contains the logging code. Each event is written to a log file.
+All events are output to "DES-Log.csv" which allows for analysis with Excel or
+the included stats-reporters.
+
+All other files in the outer directory are code or text used for testing.
+
+The code in the "Parser" directory can be compiled using the 'make compile'
+command. Executable 'stat-reporter.exe' will search the directory for a log file
+called "DES-Log.csv". Move the log file from the simulation into this directory
+to analyze it. A text file with statistics from the simulation will be output.
+
+The Parser program reads in the Log file line by line, and tallies many key
+statistics. The design was motivated by the desire to avoid more than one
+iteration over the log. Parser maintains a list of all jobs that it has seen
+arrive but not finish, and the times they arrived. This is stored as a linked
+list. The linked list is not sorted by a sorting algorithm, because it is edited
+frequently, so a sort wouldn't save much time. When jobs are inserted, the
+list iterates to put each jobs in place by timestamp. This linked list is
+implemented in the ParserOpenJobsList class.
